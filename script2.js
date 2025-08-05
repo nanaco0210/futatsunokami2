@@ -35,7 +35,6 @@ function showAbsorbAnimation(text) {
   }, 1000);
 }
 
-// 📌 記憶する（テキスト・タグ・日付）
 saveButton.addEventListener('click', () => {
   const text = memoInput.value.trim();
   const tags = tagInput.value.trim().split(/\s+/).filter(tag => tag.startsWith('#'));
@@ -48,18 +47,15 @@ saveButton.addEventListener('click', () => {
     showAbsorbAnimation(text);
     memoInput.value = '';
     tagInput.value = '';
-    console.log('記憶されました：', { text, tags, date: dateStr });
   }
 });
 
-// 🔍 想起する（検索語 + タグ + 日付）＋折りたたみ＋確認＋もっと見る＋閉じる
 recallButton.addEventListener('click', () => {
   const query = searchInput.value.trim();
   const tagQuery = searchTagInput.value.trim().split(/\s+/).filter(tag => tag.startsWith('#'));
   const dateQuery = searchDateInput.value.trim();
   searchResult.innerHTML = '';
 
-  // ✕ 閉じるボタン
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕ 想起結果を閉じる';
   closeBtn.className = 'clear-btn';
@@ -92,16 +88,27 @@ recallButton.addEventListener('click', () => {
       const wrapper = document.createElement('div');
       wrapper.className = 'memory-entry';
 
-      const lines = memoText.split(/\r?\n/);
+      const p = document.createElement('p');
+      p.className = 'memory-text';
+      p.innerHTML = escapeHTML(memoText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
 
-      if (lines.length > 3) {
-        const shortText = lines.slice(0, 3).join('\n');
-        const fullHTML = escapeHTML(memoText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
-        const shortHTML = escapeHTML(shortText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
+      // 一時的に非表示で追加して高さを測定
+      p.style.visibility = 'hidden';
+      p.style.position = 'absolute';
+      document.body.appendChild(p);
+      const height = p.scrollHeight;
+      document.body.removeChild(p);
 
-        const contentWrapper = document.createElement('div');
-        contentWrapper.className = 'content-wrapper';
-        contentWrapper.innerHTML = shortHTML;
+      const maxHeight = 39; // 約3行ぶん（行高20px × 3）
+
+      if (height > maxHeight) {
+        const fullHTML = p.innerHTML;
+        const preview = document.createElement('div');
+        preview.className = 'content-wrapper';
+        preview.innerHTML = fullHTML;
+
+        preview.style.maxHeight = `${maxHeight}px`;
+        preview.style.overflow = 'hidden';
 
         const toggleBtn = document.createElement('button');
         toggleBtn.textContent = '▼もっと見る';
@@ -110,16 +117,14 @@ recallButton.addEventListener('click', () => {
         let expanded = false;
         toggleBtn.addEventListener('click', () => {
           expanded = !expanded;
-          contentWrapper.innerHTML = expanded ? fullHTML : shortHTML;
+          preview.style.maxHeight = expanded ? 'none' : `${maxHeight}px`;
           toggleBtn.textContent = expanded ? '▲閉じる' : '▼もっと見る';
         });
 
-        wrapper.appendChild(contentWrapper);
+        wrapper.appendChild(preview);
         wrapper.appendChild(toggleBtn);
       } else {
-        const textEl = document.createElement('p');
-        textEl.innerHTML = escapeHTML(memoText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
-        wrapper.appendChild(textEl);
+        wrapper.appendChild(p);
       }
 
       if (memoDate) {
@@ -169,7 +174,6 @@ recallButton.addEventListener('click', () => {
   renderEntries(maxInitial);
 });
 
-// 📅 日付検索の補助関数
 function matchDateFilter(entryDate, input) {
   if (!input) return true;
   const rangeMatch = input.match(/^(\d{4}\/\d{2}\/\d{2})-(\d{4}\/\d{2}\/\d{2})$/);
@@ -183,12 +187,10 @@ function matchDateFilter(entryDate, input) {
   return true;
 }
 
-// 🔐 HTMLエスケープ
 function escapeHTML(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// 🔄 自動クリア機能
 function setupAutoClear() {
   [searchInput, searchTagInput, searchDateInput].forEach(input => {
     input.addEventListener('input', () => {

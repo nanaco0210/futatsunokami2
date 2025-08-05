@@ -194,3 +194,20 @@ button:hover {
   color: #444;
 }
 
+.memory-entry p,
+.memory-text {
+  font-size: 12px;            /* ← 小さめに */
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.content-wrapper {
+  font-size: 12px;            /* 折りたたみ領域も同じく */
+  line-height: 1.5;
+  max-height: 40px;           /* ← 約2行分（12px × 1.5 × 2行） */
+  overflow: hidden;
+}
+
+
+
