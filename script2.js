@@ -52,12 +52,21 @@ saveButton.addEventListener('click', () => {
   }
 });
 
-// 🔍 想起する（検索語 + タグ + 日付）← 旧形式にも対応
+// 🔍 想起する（検索語 + タグ + 日付）＋折りたたみ＋確認＋もっと見る＋閉じる
 recallButton.addEventListener('click', () => {
   const query = searchInput.value.trim();
   const tagQuery = searchTagInput.value.trim().split(/\s+/).filter(tag => tag.startsWith('#'));
   const dateQuery = searchDateInput.value.trim();
   searchResult.innerHTML = '';
+
+  // ✕ 閉じるボタン
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ 想起結果を閉じる';
+  closeBtn.className = 'clear-btn';
+  closeBtn.addEventListener('click', () => {
+    searchResult.innerHTML = '';
+  });
+  searchResult.appendChild(closeBtn);
 
   const results = memoryStorage.filter(item => {
     const memoText = typeof item === 'string' ? item : item.text;
@@ -71,44 +80,93 @@ recallButton.addEventListener('click', () => {
     return matchText && matchTags && matchDate;
   });
 
-  results.forEach(item => {
-    const memoText = typeof item === 'string' ? item : item.text;
-    const memoDate = typeof item === 'string' ? null : item.date;
+  let shownCount = 0;
+  const maxInitial = 10;
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'memory-entry';
+  function renderEntries(count) {
+    const toShow = results.slice(shownCount, shownCount + count);
+    toShow.forEach(item => {
+      const memoText = typeof item === 'string' ? item : item.text;
+      const memoDate = typeof item === 'string' ? null : item.date;
 
-    const textEl = document.createElement('p');
-    textEl.innerHTML = escapeHTML(memoText)
-      .replace(/\n/g, '<br>')
-      .replace(/ {2}/g, '&nbsp;&nbsp;');
+      const wrapper = document.createElement('div');
+      wrapper.className = 'memory-entry';
 
-    if (memoDate) {
-      const dateEl = document.createElement('span');
-      dateEl.className = 'date-display';
-      dateEl.textContent = memoDate;
-      wrapper.appendChild(dateEl);
-    }
+      const lines = memoText.split(/\r?\n/);
 
-    const delBtn = document.createElement('button');
-    delBtn.textContent = '×';
-    delBtn.className = 'delete-btn';
-    delBtn.addEventListener('click', () => {
-      memoryStorage = memoryStorage.filter(m => {
-        if (typeof m === 'string') {
-          return m !== memoText;
-        } else {
-          return !(m.text === memoText && m.date === memoDate);
-        }
+      if (lines.length > 3) {
+        const shortText = lines.slice(0, 3).join('\n');
+        const fullHTML = escapeHTML(memoText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
+        const shortHTML = escapeHTML(shortText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
+
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = 'content-wrapper';
+        contentWrapper.innerHTML = shortHTML;
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.textContent = '▼もっと見る';
+        toggleBtn.className = 'toggle-btn';
+
+        let expanded = false;
+        toggleBtn.addEventListener('click', () => {
+          expanded = !expanded;
+          contentWrapper.innerHTML = expanded ? fullHTML : shortHTML;
+          toggleBtn.textContent = expanded ? '▲閉じる' : '▼もっと見る';
+        });
+
+        wrapper.appendChild(contentWrapper);
+        wrapper.appendChild(toggleBtn);
+      } else {
+        const textEl = document.createElement('p');
+        textEl.innerHTML = escapeHTML(memoText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
+        wrapper.appendChild(textEl);
+      }
+
+      if (memoDate) {
+        const dateEl = document.createElement('span');
+        dateEl.className = 'date-display';
+        dateEl.textContent = memoDate;
+        wrapper.appendChild(dateEl);
+      }
+
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '×';
+      delBtn.className = 'delete-btn';
+      delBtn.addEventListener('click', () => {
+        const confirmed = confirm('この記憶は削除されます。本当に削除してよろしいですか？');
+        if (!confirmed) return;
+
+        memoryStorage = memoryStorage.filter(m => {
+          if (typeof m === 'string') {
+            return m !== memoText;
+          } else {
+            return !(m.text === memoText && m.date === memoDate);
+          }
+        });
+        localStorage.setItem('memoryStorage', JSON.stringify(memoryStorage));
+        wrapper.remove();
       });
-      localStorage.setItem('memoryStorage', JSON.stringify(memoryStorage));
-      wrapper.remove();
+
+      wrapper.appendChild(delBtn);
+      searchResult.appendChild(wrapper);
     });
 
-    wrapper.appendChild(textEl);
-    wrapper.appendChild(delBtn);
-    searchResult.appendChild(wrapper);
-  });
+    shownCount += count;
+
+    const existingMoreBtn = document.getElementById('moreButton');
+    if (existingMoreBtn) existingMoreBtn.remove();
+
+    if (shownCount < results.length) {
+      const moreBtn = document.createElement('button');
+      moreBtn.id = 'moreButton';
+      moreBtn.textContent = `残り${results.length - shownCount}件 → もっと見る`;
+      moreBtn.className = 'more-btn';
+      moreBtn.addEventListener('click', () => renderEntries(10));
+      searchResult.appendChild(moreBtn);
+    }
+  }
+
+  renderEntries(maxInitial);
 });
 
 // 📅 日付検索の補助関数
@@ -125,10 +183,22 @@ function matchDateFilter(entryDate, input) {
   return true;
 }
 
-// 🔐 HTMLエスケープ（XSS対策）
+// 🔐 HTMLエスケープ
 function escapeHTML(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+
+// 🔄 自動クリア機能
+function setupAutoClear() {
+  [searchInput, searchTagInput, searchDateInput].forEach(input => {
+    input.addEventListener('input', () => {
+      const q = searchInput.value.trim();
+      const t = searchTagInput.value.trim();
+      const d = searchDateInput.value.trim();
+      if (q === '' && t === '' && d === '') {
+        searchResult.innerHTML = '';
+      }
+    });
+  });
+}
+setupAutoClear();

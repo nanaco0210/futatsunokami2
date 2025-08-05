@@ -10,14 +10,14 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 40px; /* ← 間を少し狭くしました */
+  gap: 40px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .paper {
   flex: 1;
-  background: url('your-local-paper-image.jpg'); /* 適宜置き換え */
+  background: url('your-local-paper-image.jpg'); /* 必要に応じて置き換え */
   background-size: cover;
   padding: 40px;
   border-radius: 12px;
@@ -34,12 +34,22 @@ textarea {
   line-height: 1.6;
   border: none;
   border-radius: 8px;
-  background-color: transparent; /* ← 透明に戻しました */
+  background-color: transparent;
   resize: vertical;
   transition: background-color 0.3s ease;
   margin-bottom: 12px;
   outline: none;
   color: #333;
+}
+
+input[type="text"] {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 20px;
+  border: 1px solid #aaa;
+  outline: none;
 }
 
 button {
@@ -75,6 +85,14 @@ button:hover {
   margin: 0;
   line-height: 1.5;
   white-space: pre-wrap;
+}
+
+.date-display {
+  position: absolute;
+  bottom: 6px;
+  right: 10px;
+  font-size: 12px;
+  color: #aaa;
 }
 
 .delete-btn {
@@ -134,23 +152,45 @@ button:hover {
   }
 }
 
-#searchTagInput,
-#searchDateInput,
-#tagInput {
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 8px 14px;
-  font-size: 14px;
-  border-radius: 20px;
-  border: 1px solid #aaa;
-  outline: none;
+/* ▼▼▼ 折りたたみ・もっと見る対応スタイル ▼▼▼ */
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #0077aa;
+  cursor: pointer;
+  margin-top: 4px;
+  font-size: 13px;
+  padding: 0;
 }
 
-.date-display {
-  position: absolute;
-  bottom: 6px;
-  right: 10px;
-  font-size: 12px;
-  color: #aaa;
+.content-wrapper {
+  white-space: normal;
+}
+
+.more-btn {
+  margin-top: 16px;
+  background-color: #ddd;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+/* 追記部分 */
+.clear-btn {
+  display: block;
+  margin-bottom: 12px;
+  background-color: transparent;
+  border: none;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.clear-btn:hover {
+  color: #444;
 }
 
