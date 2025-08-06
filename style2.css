@@ -17,7 +17,7 @@ body {
 
 .paper {
   flex: 1;
-  background: url('your-local-paper-image.jpg'); /* 必要に応じて置き換え */
+  background: url('your-local-paper-image.jpg'); /* 適宜差し替え */
   background-size: cover;
   padding: 40px;
   border-radius: 12px;
@@ -81,9 +81,11 @@ button:hover {
   border: none;
 }
 
-.memory-entry p {
-  margin: 0;
+.memory-entry p,
+.memory-text {
+  font-size: 12px; /* ← 小さめに調整 */
   line-height: 1.5;
+  margin: 0;
   white-space: pre-wrap;
 }
 
@@ -152,7 +154,14 @@ button:hover {
   }
 }
 
-/* ▼▼▼ 折りたたみ・もっと見る対応スタイル ▼▼▼ */
+/* ▼ 折りたたみ系 ▼ */
+
+.content-wrapper {
+  font-size: 12px;
+  line-height: 1.5;
+  max-height: 39px; /* 折りたたみ表示約２行分 */
+  overflow: hidden;
+}
 
 .toggle-btn {
   background: none;
@@ -164,9 +173,7 @@ button:hover {
   padding: 0;
 }
 
-.content-wrapper {
-  white-space: normal;
-}
+/* ▼ もっと見る ▼ */
 
 .more-btn {
   margin-top: 16px;
@@ -178,7 +185,8 @@ button:hover {
   cursor: pointer;
 }
 
-/* 追記部分 */
+/* ▼ 想起結果を閉じるボタン ▼ */
+
 .clear-btn {
   display: block;
   margin-bottom: 12px;
@@ -194,20 +202,33 @@ button:hover {
   color: #444;
 }
 
-.memory-entry p,
-.memory-text {
-  font-size: 12px;            /* ← 小さめに */
-  line-height: 1.5;
-  margin: 0;
-  white-space: pre-wrap;
+/* ▼ レスポンシブ対応：スマホ縦並び ▼ */
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    gap: 24px;
+    padding: 20px;
+  }
+
+  .paper {
+    width: 100%;
+    padding: 24px;
+  }
+
+  .memory-entry {
+    padding-right: 30px;
+  }
+
+  .date-display {
+    font-size: 11px;
+    bottom: 4px;
+    right: 6px;
+  }
+
+  .delete-btn {
+    top: 6px;
+    right: 6px;
+    font-size: 14px;
+  }
 }
-
-.content-wrapper {
-  font-size: 12px;            /* 折りたたみ領域も同じく */
-  line-height: 1.5;
-  max-height: 40px;           /* ← 約2行分（12px × 1.5 × 2行） */
-  overflow: hidden;
-}
-
-
-
