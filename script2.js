@@ -53,7 +53,7 @@ function getFormattedDateTime() {
 saveButton.addEventListener('click', () => {
   const text = memoInput.value.trim();
   const tags = normalizeInput(tagInput.value).split(/\s+/).filter(tag => tag.startsWith('#'));
-  const date = getFormattedDateTime(); // ← 時間含む
+  const date = getFormattedDateTime();
   if (text.length > 0) {
     memoryStorage.push({ text, tags, date });
     localStorage.setItem('memoryStorage', JSON.stringify(memoryStorage));
@@ -89,9 +89,11 @@ recallButton.addEventListener('click', () => {
     return matchText && matchTags && matchDate;
   });
 
-  // 新しい順（時刻込み）で並べる
+  // ✅ 完全に「新しい日時順」に並べ替え
   results.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  console.log("ソート後の順序", results.map(r => r.date));
+
+  // ✅ 開発用ログ確認
+  console.log("並び順チェック:", results.map(r => r.date));
 
   let shownCount = 0;
   const maxInitial = 10;
@@ -148,7 +150,7 @@ recallButton.addEventListener('click', () => {
       if (memoDate) {
         const dateEl = document.createElement('span');
         dateEl.className = 'date-display';
-        dateEl.textContent = memoDate.slice(0, 16); // ← "YYYY/MM/DD HH:mm" 表示
+        dateEl.textContent = memoDate.slice(0, 16); // 表示例: "2025/08/09 14:36"
         wrapper.appendChild(dateEl);
       }
 
@@ -189,7 +191,7 @@ recallButton.addEventListener('click', () => {
 function matchDateFilter(entryDate, input) {
   if (!input) return true;
 
-  const entryDay = entryDate.split(' ')[0]; // "YYYY/MM/DD"だけ見る
+  const entryDay = entryDate.split(' ')[0]; // "YYYY/MM/DD" 部分のみ
 
   const rangeMatch = input.match(/^(\d{4}\/\d{2}\/\d{2})-(\d{4}\/\d{2}\/\d{2})$/);
   if (rangeMatch) {
