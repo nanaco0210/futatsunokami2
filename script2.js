@@ -91,6 +91,7 @@ recallButton.addEventListener('click', () => {
 
   // 新しい順（時刻込み）で並べる
   results.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  console.log("ソート後の順序", results.map(r => r.date));
 
   let shownCount = 0;
   const maxInitial = 10;
