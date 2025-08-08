@@ -17,13 +17,13 @@ body {
 
 .paper {
   flex: 1;
-  background: url('your-local-paper-image.jpg'); /* 適宜差し替え */
+  background: url('your-local-paper-image.jpg'); /* 任意で差し替え */
   background-size: cover;
   padding: 40px;
   border-radius: 12px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 24px rgba(0,0,0,.05);
   min-height: 400px;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow .3s ease;
 }
 
 textarea {
@@ -54,21 +54,16 @@ input[type="text"] {
 button {
   padding: 10px 18px;
   background-color: #008080;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color .3s ease;
 }
+button:hover { background-color: #006666; }
 
-button:hover {
-  background-color: #006666;
-}
-
-#searchResult {
-  margin-top: 20px;
-}
+#searchResult { margin-top: 20px; }
 
 .memory-entry {
   position: relative;
@@ -86,16 +81,18 @@ button:hover {
   white-space: pre-wrap;
 }
 
+/* 日付表示（右下） */
 .date-display {
   position: absolute;
   bottom: 6px;
   right: 10px;
-  font-size: 12px; /* スマホでも読みやすく */
+  font-size: 12px;
   color: #aaa;
   white-space: nowrap; /* 折り返さない */
   z-index: 1;
 }
 
+/* 削除ボタン（右上） */
 .delete-btn {
   position: absolute;
   top: 8px;
@@ -106,56 +103,51 @@ button:hover {
   background: none;
   z-index: 2;
 }
+.delete-btn:hover { color: #666; }
 
-.delete-btn:hover {
-  color: #666;
-}
-
+/* 吸い込みアニメ */
 #absorbAnimationContainer {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 0; left: 0;
   pointer-events: none;
   z-index: 9999;
 }
-
 .absorb-text {
   position: absolute;
   font-size: 16px;
   padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255,255,255,.85);
   color: #444;
   border-radius: 10px;
-  font-family: 'Yu Gothic Light', 'Noto Sans JP', sans-serif;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  font-family: 'Yu Gothic Light','Noto Sans JP',sans-serif;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06);
   backdrop-filter: blur(3px);
   opacity: 1;
   animation: absorbSoftFade 1.4s ease-out forwards;
 }
-
 @keyframes absorbSoftFade {
-  0% {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(0.96) translateY(-20px);
-    opacity: 0.6;
-  }
-  100% {
-    transform: scale(0.88) translateY(-50px);
-    opacity: 0;
-  }
+  0% { transform: scale(1) translateY(0); opacity: 1; }
+  50% { transform: scale(.96) translateY(-20px); opacity: .6; }
+  100% { transform: scale(.88) translateY(-50px); opacity: 0; }
 }
 
-/* ▼ 折りたたみ系 ▼ */
+/* ▼ 折りたたみ：line-clamp で3行に制限 */
 .content-wrapper {
   font-size: 12px;
   line-height: 1.5;
-  max-height: 39px; /* 約2行分 */
+  white-space: pre-wrap;
+}
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
   overflow: hidden;
 }
+.content-wrapper.expanded {
+  -webkit-line-clamp: unset;
+}
 
+/* トグルボタン */
 .toggle-btn {
   background: none;
   border: none;
@@ -166,7 +158,7 @@ button:hover {
   padding: 0;
 }
 
-/* ▼ もっと見る ▼ */
+/* ▼ 一覧の「もっと見る」 */
 .more-btn {
   margin-top: 16px;
   background-color: #ddd;
@@ -177,49 +169,28 @@ button:hover {
   cursor: pointer;
 }
 
-/* ▼ 想起結果を閉じるボタン ▼ */
+/* 想起結果を閉じる */
 .clear-btn {
   display: block;
   margin-bottom: 12px;
-  background-color: transparent;
+  background: transparent;
   border: none;
   color: #888;
   font-size: 14px;
   cursor: pointer;
   text-align: left;
 }
+.clear-btn:hover { color: #444; }
 
-.clear-btn:hover {
-  color: #444;
-}
-
-/* ▼ レスポンシブ対応：スマホ縦並び ▼ */
+/* ▼ スマホ（縦並び＋日付を必ず1行で見せる） */
 @media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-    gap: 24px;
-    padding: 20px;
-  }
-
-  .paper {
-    width: 100%;
-    padding: 24px;
-  }
-
-  .memory-entry {
-    padding-right: 30px;
-  }
-
+  .container { flex-direction: column; gap: 24px; padding: 20px; }
+  .paper { width: 100%; padding: 24px; }
+  .memory-entry { padding-right: 30px; }
   .date-display {
-    font-size: 12px; /* 小さすぎないように調整 */
-    bottom: 4px;
-    right: 6px;
-    white-space: nowrap; /* 折り返さない */
+    font-size: 12px;
+    bottom: 4px; right: 6px;
+    white-space: nowrap;
   }
-
-  .delete-btn {
-    top: 6px;
-    right: 6px;
-    font-size: 14px;
-  }
+  .delete-btn { top: 6px; right: 6px; font-size: 14px; }
 }
