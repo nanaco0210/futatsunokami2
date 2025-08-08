@@ -19,6 +19,15 @@ if (savedMemory) {
   }
 }
 
+function normalizeInput(str) {
+  return str
+    .replace(/＃/g, '#')
+    .replace(/[－–ー]/g, '-')
+    .replace(/[．・／]/g, '/')
+    .replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xfee0))
+    .trim();
+}
+
 function showAbsorbAnimation(text) {
   const container = document.getElementById('absorbAnimationContainer');
   const anim = document.createElement('div');
@@ -37,7 +46,7 @@ function showAbsorbAnimation(text) {
 
 saveButton.addEventListener('click', () => {
   const text = memoInput.value.trim();
-  const tags = tagInput.value.trim().split(/\s+/).filter(tag => tag.startsWith('#'));
+  const tags = normalizeInput(tagInput.value).split(/\s+/).filter(tag => tag.startsWith('#'));
   const date = new Date();
   const dateStr = date.toISOString().split('T')[0].replace(/-/g, '/');
 
@@ -52,8 +61,8 @@ saveButton.addEventListener('click', () => {
 
 recallButton.addEventListener('click', () => {
   const query = searchInput.value.trim();
-  const tagQuery = searchTagInput.value.trim().split(/\s+/).filter(tag => tag.startsWith('#'));
-  const dateQuery = searchDateInput.value.trim();
+  const tagQuery = normalizeInput(searchTagInput.value).split(/\s+/).filter(tag => tag.startsWith('#'));
+  const dateQuery = normalizeInput(searchDateInput.value);
   searchResult.innerHTML = '';
 
   const closeBtn = document.createElement('button');
@@ -64,7 +73,7 @@ recallButton.addEventListener('click', () => {
   });
   searchResult.appendChild(closeBtn);
 
-  const results = memoryStorage.filter(item => {
+  let results = memoryStorage.filter(item => {
     const memoText = typeof item === 'string' ? item : item.text;
     const memoTags = typeof item === 'string' ? [] : item.tags || [];
     const memoDate = typeof item === 'string' ? '' : item.date || '';
@@ -75,6 +84,9 @@ recallButton.addEventListener('click', () => {
 
     return matchText && matchTags && matchDate;
   });
+
+  // ✅ 検索結果を新しい順に並べる（常に実行）
+  results = results.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   let shownCount = 0;
   const maxInitial = 10;
@@ -88,25 +100,23 @@ recallButton.addEventListener('click', () => {
       const wrapper = document.createElement('div');
       wrapper.className = 'memory-entry';
 
-      const p = document.createElement('p');
-      p.className = 'memory-text';
-      p.innerHTML = escapeHTML(memoText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
+      const displayText = escapeHTML(memoText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
 
-      // 一時的に非表示で追加して高さを測定
-      p.style.visibility = 'hidden';
-      p.style.position = 'absolute';
-      document.body.appendChild(p);
-      const height = p.scrollHeight;
-      document.body.removeChild(p);
+      const tempP = document.createElement('p');
+      tempP.className = 'memory-text';
+      tempP.style.visibility = 'hidden';
+      tempP.style.position = 'absolute';
+      tempP.innerHTML = displayText;
+      document.body.appendChild(tempP);
+      const height = tempP.scrollHeight;
+      document.body.removeChild(tempP);
 
-      const maxHeight = 39; // 約3行ぶん（行高20px × 3）
+      const maxHeight = 39;
 
       if (height > maxHeight) {
-        const fullHTML = p.innerHTML;
         const preview = document.createElement('div');
         preview.className = 'content-wrapper';
-        preview.innerHTML = fullHTML;
-
+        preview.innerHTML = displayText;
         preview.style.maxHeight = `${maxHeight}px`;
         preview.style.overflow = 'hidden';
 
@@ -124,6 +134,9 @@ recallButton.addEventListener('click', () => {
         wrapper.appendChild(preview);
         wrapper.appendChild(toggleBtn);
       } else {
+        const p = document.createElement('p');
+        p.className = 'memory-text';
+        p.innerHTML = displayText;
         wrapper.appendChild(p);
       }
 
@@ -153,7 +166,7 @@ recallButton.addEventListener('click', () => {
       });
 
       wrapper.appendChild(delBtn);
-      searchResult.appendChild(wrapper);
+      searchResult.insertBefore(wrapper, searchResult.querySelector('#moreButton') || null);
     });
 
     shownCount += count;
@@ -188,7 +201,9 @@ function matchDateFilter(entryDate, input) {
 }
 
 function escapeHTML(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return str.replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
 }
 
 function setupAutoClear() {
