@@ -44,14 +44,18 @@ function showAbsorbAnimation(text) {
   }, 1000);
 }
 
+function getFormattedDateTime() {
+  const d = new Date();
+  const pad = n => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
 saveButton.addEventListener('click', () => {
   const text = memoInput.value.trim();
   const tags = normalizeInput(tagInput.value).split(/\s+/).filter(tag => tag.startsWith('#'));
-  const date = new Date();
-  const dateStr = date.toISOString().split('T')[0].replace(/-/g, '/');
-
+  const date = getFormattedDateTime(); // ← 時間含む
   if (text.length > 0) {
-    memoryStorage.push({ text, tags, date: dateStr });
+    memoryStorage.push({ text, tags, date });
     localStorage.setItem('memoryStorage', JSON.stringify(memoryStorage));
     showAbsorbAnimation(text);
     memoInput.value = '';
@@ -74,9 +78,9 @@ recallButton.addEventListener('click', () => {
   searchResult.appendChild(closeBtn);
 
   let results = memoryStorage.filter(item => {
-    const memoText = typeof item === 'string' ? item : item.text;
-    const memoTags = typeof item === 'string' ? [] : item.tags || [];
-    const memoDate = typeof item === 'string' ? '' : item.date || '';
+    const memoText = item.text || '';
+    const memoTags = item.tags || [];
+    const memoDate = item.date || '';
 
     const matchText = query === '' || memoText.includes(query);
     const matchTags = tagQuery.length === 0 || tagQuery.every(t => memoTags.includes(t));
@@ -85,8 +89,8 @@ recallButton.addEventListener('click', () => {
     return matchText && matchTags && matchDate;
   });
 
-  // ✅ 検索結果を新しい順に並べる（常に実行）
-  results = results.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  // 新しい順（時刻込み）で並べる
+  results.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   let shownCount = 0;
   const maxInitial = 10;
@@ -94,8 +98,8 @@ recallButton.addEventListener('click', () => {
   function renderEntries(count) {
     const toShow = results.slice(shownCount, shownCount + count);
     toShow.forEach(item => {
-      const memoText = typeof item === 'string' ? item : item.text;
-      const memoDate = typeof item === 'string' ? null : item.date;
+      const memoText = item.text;
+      const memoDate = item.date;
 
       const wrapper = document.createElement('div');
       wrapper.className = 'memory-entry';
@@ -143,7 +147,7 @@ recallButton.addEventListener('click', () => {
       if (memoDate) {
         const dateEl = document.createElement('span');
         dateEl.className = 'date-display';
-        dateEl.textContent = memoDate;
+        dateEl.textContent = memoDate.slice(0, 16); // ← "YYYY/MM/DD HH:mm" 表示
         wrapper.appendChild(dateEl);
       }
 
@@ -154,13 +158,7 @@ recallButton.addEventListener('click', () => {
         const confirmed = confirm('この記憶は削除されます。本当に削除してよろしいですか？');
         if (!confirmed) return;
 
-        memoryStorage = memoryStorage.filter(m => {
-          if (typeof m === 'string') {
-            return m !== memoText;
-          } else {
-            return !(m.text === memoText && m.date === memoDate);
-          }
-        });
+        memoryStorage = memoryStorage.filter(m => m.text !== memoText || m.date !== memoDate);
         localStorage.setItem('memoryStorage', JSON.stringify(memoryStorage));
         wrapper.remove();
       });
@@ -189,13 +187,16 @@ recallButton.addEventListener('click', () => {
 
 function matchDateFilter(entryDate, input) {
   if (!input) return true;
+
+  const entryDay = entryDate.split(' ')[0]; // "YYYY/MM/DD"だけ見る
+
   const rangeMatch = input.match(/^(\d{4}\/\d{2}\/\d{2})-(\d{4}\/\d{2}\/\d{2})$/);
   if (rangeMatch) {
     const from = rangeMatch[1];
     const to = rangeMatch[2];
-    return entryDate >= from && entryDate <= to;
+    return entryDay >= from && entryDay <= to;
   } else if (/^\d{4}\/\d{2}\/\d{2}$/.test(input)) {
-    return entryDate === input;
+    return entryDay === input;
   }
   return true;
 }
