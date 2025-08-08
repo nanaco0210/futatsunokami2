@@ -150,8 +150,8 @@ button:hover {
 
 /* ▼ 折りたたみ（高さ制限時）▼ */
 .content-wrapper {
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;        /* ← 13px → 14px に変更 */
+  line-height: 1.6;       /* ← 1.5 → 1.6 に変更 */
   overflow: hidden;
   transition: max-height 0.3s ease;
 }

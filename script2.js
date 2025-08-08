@@ -1,4 +1,3 @@
-// script2.js（完全版）
 const memoInput = document.getElementById('memoInput');
 const searchInput = document.getElementById('searchInput');
 const tagInput = document.getElementById('tagInput');
@@ -110,14 +109,20 @@ recallButton.addEventListener('click', () => {
       preview.className = 'content-wrapper';
       preview.innerHTML = displayText;
 
+      // 一時的にDOMに追加して高さを測定
+      preview.style.position = 'absolute';
+      preview.style.visibility = 'hidden';
+      preview.style.width = '300px';
       document.body.appendChild(preview);
       const height = preview.scrollHeight;
       document.body.removeChild(preview);
 
+      const lineHeight = 22;         // ← CSSと合わせてください（14px × 1.6）
       const lineThreshold = 3;
-      const lineHeight = 18; // px（CSSと合わせる）
 
       if (height > lineHeight * lineThreshold || memoText.length > 80) {
+        preview.style.position = '';
+        preview.style.visibility = '';
         preview.style.maxHeight = `${lineHeight * lineThreshold}px`;
         preview.style.overflow = 'hidden';
 
@@ -184,6 +189,7 @@ recallButton.addEventListener('click', () => {
 
 function matchDateFilter(entryDate, input) {
   if (!input) return true;
+
   const entryDay = entryDate.split(' ')[0];
   const rangeMatch = input.match(/^(\d{4}\/\d{2}\/\d{2})-(\d{4}\/\d{2}\/\d{2})$/);
   if (rangeMatch) {
