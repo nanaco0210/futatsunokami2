@@ -1,5 +1,4 @@
-// 省略せず、全文表示します（途中で切れません）
-
+// script2.js（完全版）
 const memoInput = document.getElementById('memoInput');
 const searchInput = document.getElementById('searchInput');
 const tagInput = document.getElementById('tagInput');
@@ -107,23 +106,19 @@ recallButton.addEventListener('click', () => {
 
       const displayText = escapeHTML(memoText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
 
-      const tempP = document.createElement('p');
-      tempP.className = 'memory-text';
-      tempP.style.visibility = 'hidden';
-      tempP.style.position = 'absolute';
-      tempP.style.width = '300px';
-      tempP.innerHTML = displayText;
-      document.body.appendChild(tempP);
-      const height = tempP.scrollHeight;
-      document.body.removeChild(tempP);
+      const preview = document.createElement('div');
+      preview.className = 'content-wrapper';
+      preview.innerHTML = displayText;
 
-      const maxHeight = 39;
+      document.body.appendChild(preview);
+      const height = preview.scrollHeight;
+      document.body.removeChild(preview);
 
-      if (height > maxHeight) {
-        const preview = document.createElement('div');
-        preview.className = 'content-wrapper';
-        preview.innerHTML = displayText;
-        preview.style.maxHeight = `${maxHeight}px`;
+      const lineThreshold = 3;
+      const lineHeight = 18; // px（CSSと合わせる）
+
+      if (height > lineHeight * lineThreshold || memoText.length > 80) {
+        preview.style.maxHeight = `${lineHeight * lineThreshold}px`;
         preview.style.overflow = 'hidden';
 
         const toggleBtn = document.createElement('button');
@@ -133,7 +128,8 @@ recallButton.addEventListener('click', () => {
         let expanded = false;
         toggleBtn.addEventListener('click', () => {
           expanded = !expanded;
-          preview.style.maxHeight = expanded ? 'none' : `${maxHeight}px`;
+          preview.style.maxHeight = expanded ? 'none' : `${lineHeight * lineThreshold}px`;
+          preview.style.overflow = expanded ? 'visible' : 'hidden';
           toggleBtn.textContent = expanded ? '▲閉じる' : '▼もっと見る';
         });
 
@@ -188,9 +184,7 @@ recallButton.addEventListener('click', () => {
 
 function matchDateFilter(entryDate, input) {
   if (!input) return true;
-
   const entryDay = entryDate.split(' ')[0];
-
   const rangeMatch = input.match(/^(\d{4}\/\d{2}\/\d{2})-(\d{4}\/\d{2}\/\d{2})$/);
   if (rangeMatch) {
     const from = rangeMatch[1];
