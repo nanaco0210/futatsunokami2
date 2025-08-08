@@ -36,7 +36,6 @@ textarea {
   border-radius: 8px;
   background-color: transparent;
   resize: vertical;
-  transition: background-color 0.3s ease;
   margin-bottom: 12px;
   outline: none;
   color: #333;
@@ -73,7 +72,7 @@ button:hover {
 
 .memory-entry {
   position: relative;
-  padding: 12px 36px 24px 12px; /* ← 余白を少し広くする */
+  padding: 12px 36px 24px 12px;
   margin-top: 10px;
   border-radius: 8px;
   background: transparent;
@@ -81,7 +80,7 @@ button:hover {
 
 .memory-entry p,
 .memory-text {
-  font-size: 12px; /* ← 小さめに調整 */
+  font-size: 12px;
   line-height: 1.5;
   margin: 0;
   white-space: pre-wrap;
@@ -91,11 +90,11 @@ button:hover {
   position: absolute;
   bottom: 6px;
   right: 10px;
-  font-size: 12px;
+  font-size: 12px; /* スマホでも読みやすく */
   color: #aaa;
+  white-space: nowrap; /* 折り返さない */
   z-index: 1;
 }
-
 
 .delete-btn {
   position: absolute;
@@ -132,8 +131,6 @@ button:hover {
   backdrop-filter: blur(3px);
   opacity: 1;
   animation: absorbSoftFade 1.4s ease-out forwards;
-  transition: all 0.3s ease;
-  transform-origin: center;
 }
 
 @keyframes absorbSoftFade {
@@ -152,11 +149,10 @@ button:hover {
 }
 
 /* ▼ 折りたたみ系 ▼ */
-
 .content-wrapper {
   font-size: 12px;
   line-height: 1.5;
-  max-height: 39px; /* 折りたたみ表示約２行分 */
+  max-height: 39px; /* 約2行分 */
   overflow: hidden;
 }
 
@@ -171,7 +167,6 @@ button:hover {
 }
 
 /* ▼ もっと見る ▼ */
-
 .more-btn {
   margin-top: 16px;
   background-color: #ddd;
@@ -183,7 +178,6 @@ button:hover {
 }
 
 /* ▼ 想起結果を閉じるボタン ▼ */
-
 .clear-btn {
   display: block;
   margin-bottom: 12px;
@@ -200,7 +194,6 @@ button:hover {
 }
 
 /* ▼ レスポンシブ対応：スマホ縦並び ▼ */
-
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
@@ -218,45 +211,15 @@ button:hover {
   }
 
   .date-display {
-    font-size: 11px;
+    font-size: 12px; /* 小さすぎないように調整 */
     bottom: 4px;
     right: 6px;
+    white-space: nowrap; /* 折り返さない */
   }
 
   .delete-btn {
     top: 6px;
     right: 6px;
     font-size: 14px;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .container {
-    flex-direction: column !important; /* ← 強制的に縦並びに */
-    gap: 20px;
-    padding: 16px;
-  }
-
-  .paper {
-    width: 100% !important;
-    min-height: auto;
-    padding: 20px !important;
-  }
-
-  textarea,
-  input[type="text"] {
-    font-size: 14px;
-  }
-
-  .delete-btn {
-    right: 8px;
-    top: 8px;
-    font-size: 16px;
-  }
-
-  .date-display {
-    right: 8px;
-    bottom: 6px;
-    font-size: 11px;
   }
 }
