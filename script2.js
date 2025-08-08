@@ -1,3 +1,5 @@
+// 省略せず、全文表示します（途中で切れません）
+
 const memoInput = document.getElementById('memoInput');
 const searchInput = document.getElementById('searchInput');
 const tagInput = document.getElementById('tagInput');
@@ -19,7 +21,6 @@ if (savedMemory) {
   }
 }
 
-// 全角→半角などの正規化
 function normalizeInput(str) {
   return str
     .replace(/＃/g, '#')
@@ -29,7 +30,6 @@ function normalizeInput(str) {
     .trim();
 }
 
-// 吸い込みアニメ
 function showAbsorbAnimation(text) {
   const container = document.getElementById('absorbAnimationContainer');
   const anim = document.createElement('div');
@@ -41,58 +41,56 @@ function showAbsorbAnimation(text) {
   anim.style.top = `${rect.top + window.scrollY + rect.height / 2 - 10}px`;
 
   container.appendChild(anim);
-  setTimeout(() => container.removeChild(anim), 1000);
+  setTimeout(() => {
+    container.removeChild(anim);
+  }, 1000);
 }
 
-// 日時："YYYY/MM/DD HH:mm:ss"
 function getFormattedDateTime() {
   const d = new Date();
-  const p = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  const pad = n => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-// 記憶する
 saveButton.addEventListener('click', () => {
   const text = memoInput.value.trim();
-  const tags = normalizeInput(tagInput.value).split(/\s+/).filter(t => t.startsWith('#'));
+  const tags = normalizeInput(tagInput.value).split(/\s+/).filter(tag => tag.startsWith('#'));
   const date = getFormattedDateTime();
-  if (!text) return;
-
-  memoryStorage.push({ text, tags, date });
-  localStorage.setItem('memoryStorage', JSON.stringify(memoryStorage));
-  showAbsorbAnimation(text);
-  memoInput.value = '';
-  tagInput.value = '';
+  if (text.length > 0) {
+    memoryStorage.push({ text, tags, date });
+    localStorage.setItem('memoryStorage', JSON.stringify(memoryStorage));
+    showAbsorbAnimation(text);
+    memoInput.value = '';
+    tagInput.value = '';
+  }
 });
 
-// 想起する
 recallButton.addEventListener('click', () => {
   const query = searchInput.value.trim();
-  const tagQuery = normalizeInput(searchTagInput.value).split(/\s+/).filter(t => t.startsWith('#'));
+  const tagQuery = normalizeInput(searchTagInput.value).split(/\s+/).filter(tag => tag.startsWith('#'));
   const dateQuery = normalizeInput(searchDateInput.value);
-
   searchResult.innerHTML = '';
 
-  // 閉じる
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕ 想起結果を閉じる';
   closeBtn.className = 'clear-btn';
-  closeBtn.addEventListener('click', () => searchResult.innerHTML = '');
+  closeBtn.addEventListener('click', () => {
+    searchResult.innerHTML = '';
+  });
   searchResult.appendChild(closeBtn);
 
-  // フィルタ
   let results = memoryStorage.filter(item => {
     const memoText = item.text || '';
     const memoTags = item.tags || [];
     const memoDate = item.date || '';
 
-    const okText = query === '' || memoText.includes(query);
-    const okTags = tagQuery.length === 0 || tagQuery.every(t => memoTags.includes(t));
-    const okDate = matchDateFilter(memoDate, dateQuery);
-    return okText && okTags && okDate;
+    const matchText = query === '' || memoText.includes(query);
+    const matchTags = tagQuery.length === 0 || tagQuery.every(t => memoTags.includes(t));
+    const matchDate = matchDateFilter(memoDate, dateQuery);
+
+    return matchText && matchTags && matchDate;
   });
 
-  // 新しい日時順
   results.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   let shownCount = 0;
@@ -100,75 +98,80 @@ recallButton.addEventListener('click', () => {
 
   function renderEntries(count) {
     const toShow = results.slice(shownCount, shownCount + count);
-
     toShow.forEach(item => {
+      const memoText = item.text;
+      const memoDate = item.date;
+
       const wrapper = document.createElement('div');
       wrapper.className = 'memory-entry';
 
-      // テキスト（HTML整形）
-      const display = escapeHTML(item.text)
-        .replace(/\n/g, '<br>')
-        .replace(/ {2}/g, '&nbsp;&nbsp;');
+      const displayText = escapeHTML(memoText).replace(/\n/g, '<br>').replace(/ {2}/g, '&nbsp;&nbsp;');
 
-      // まずは常に“折りたたみ状態”で挿入（line-clamp）
-      const preview = document.createElement('div');
-      preview.className = 'content-wrapper clamp-3';
-      preview.innerHTML = display;
-      wrapper.appendChild(preview);
+      const tempP = document.createElement('p');
+      tempP.className = 'memory-text';
+      tempP.style.visibility = 'hidden';
+      tempP.style.position = 'absolute';
+      tempP.style.width = '300px';
+      tempP.innerHTML = displayText;
+      document.body.appendChild(tempP);
+      const height = tempP.scrollHeight;
+      document.body.removeChild(tempP);
 
-      // 実DOMで溢れているか判定（スマホでも正確）
-      const needsToggle = preview.scrollHeight > preview.clientHeight + 1;
-      if (needsToggle) {
+      const maxHeight = 39;
+
+      if (height > maxHeight) {
+        const preview = document.createElement('div');
+        preview.className = 'content-wrapper';
+        preview.innerHTML = displayText;
+        preview.style.maxHeight = `${maxHeight}px`;
+        preview.style.overflow = 'hidden';
+
         const toggleBtn = document.createElement('button');
         toggleBtn.textContent = '▼もっと見る';
         toggleBtn.className = 'toggle-btn';
+
         let expanded = false;
         toggleBtn.addEventListener('click', () => {
           expanded = !expanded;
-          preview.classList.toggle('expanded', expanded);
-          if (expanded) {
-            preview.classList.remove('clamp-3');
-            toggleBtn.textContent = '▲閉じる';
-          } else {
-            preview.classList.add('clamp-3');
-            toggleBtn.textContent = '▼もっと見る';
-          }
+          preview.style.maxHeight = expanded ? 'none' : `${maxHeight}px`;
+          toggleBtn.textContent = expanded ? '▲閉じる' : '▼もっと見る';
         });
+
+        wrapper.appendChild(preview);
         wrapper.appendChild(toggleBtn);
       } else {
-        // 3行以内ならクランプ解除＆ボタン不要
-        preview.classList.remove('clamp-3');
+        const p = document.createElement('p');
+        p.className = 'memory-text';
+        p.innerHTML = displayText;
+        wrapper.appendChild(p);
       }
 
-      // 日付表示（分まで）
-      if (item.date) {
+      if (memoDate) {
         const dateEl = document.createElement('span');
         dateEl.className = 'date-display';
-        dateEl.textContent = item.date.slice(0, 16); // "YYYY/MM/DD HH:mm"
+        dateEl.textContent = memoDate.slice(0, 16);
         wrapper.appendChild(dateEl);
       }
 
-      // 削除
       const delBtn = document.createElement('button');
       delBtn.textContent = '×';
       delBtn.className = 'delete-btn';
       delBtn.addEventListener('click', () => {
-        const ok = confirm('この記憶は削除されます。本当に削除してよろしいですか？');
-        if (!ok) return;
-        memoryStorage = memoryStorage.filter(m => !(m.text === item.text && m.date === item.date));
+        const confirmed = confirm('この記憶は削除されます。本当に削除してよろしいですか？');
+        if (!confirmed) return;
+        memoryStorage = memoryStorage.filter(m => m.text !== memoText || m.date !== memoDate);
         localStorage.setItem('memoryStorage', JSON.stringify(memoryStorage));
         wrapper.remove();
       });
-      wrapper.appendChild(delBtn);
 
-      // 新しい順で先頭に（Moreボタンの手前）
+      wrapper.appendChild(delBtn);
       searchResult.insertBefore(wrapper, searchResult.querySelector('#moreButton') || null);
     });
 
     shownCount += count;
 
-    const existingMore = document.getElementById('moreButton');
-    if (existingMore) existingMore.remove();
+    const existingMoreBtn = document.getElementById('moreButton');
+    if (existingMoreBtn) existingMoreBtn.remove();
 
     if (shownCount < results.length) {
       const moreBtn = document.createElement('button');
@@ -183,37 +186,37 @@ recallButton.addEventListener('click', () => {
   renderEntries(maxInitial);
 });
 
-// 日付検索：単日 or 範囲（YYYY/MM/DD[-YYYY/MM/DD]）
-function matchDateFilter(entryDateTime, inputRaw) {
-  if (!inputRaw) return true;
-  const input = normalizeInput(inputRaw);
+function matchDateFilter(entryDate, input) {
+  if (!input) return true;
 
-  const entryDay = (entryDateTime || '').split(' ')[0]; // "YYYY/MM/DD"
+  const entryDay = entryDate.split(' ')[0];
 
-  const m = input.match(/^(\d{4}\/\d{2}\/\d{2})(?:-(\d{4}\/\d{2}\/\d{2}))?$/);
-  if (!m) return true;
-
-  const from = m[1];
-  const to = m[2];
-  if (!to) {
-    return entryDay === from;
+  const rangeMatch = input.match(/^(\d{4}\/\d{2}\/\d{2})-(\d{4}\/\d{2}\/\d{2})$/);
+  if (rangeMatch) {
+    const from = rangeMatch[1];
+    const to = rangeMatch[2];
+    return entryDay >= from && entryDay <= to;
+  } else if (/^\d{4}\/\d{2}\/\d{2}$/.test(input)) {
+    return entryDay === input;
   }
-  return entryDay >= from && entryDay <= to;
+  return true;
 }
 
-// HTMLエスケープ
 function escapeHTML(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return str.replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
 }
 
-// 入力が全部空なら結果を消す
 function setupAutoClear() {
-  [searchInput, searchTagInput, searchDateInput].forEach(inp => {
-    inp.addEventListener('input', () => {
+  [searchInput, searchTagInput, searchDateInput].forEach(input => {
+    input.addEventListener('input', () => {
       const q = searchInput.value.trim();
       const t = searchTagInput.value.trim();
       const d = searchDateInput.value.trim();
-      if (q === '' && t === '' && d === '') searchResult.innerHTML = '';
+      if (q === '' && t === '' && d === '') {
+        searchResult.innerHTML = '';
+      }
     });
   });
 }
